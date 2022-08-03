@@ -2,13 +2,14 @@ import os
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from eth_account import Account
-from eth_account.signers.local import LocalAccount
+from eth_account.messages import encode_defunct
 from dotenv import load_dotenv
 
 
 class Web3Playground:
 
   web3: Web3
+  account1_private_key: str
   account1: Account
   account2: Account
 
@@ -17,7 +18,8 @@ class Web3Playground:
     self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
     assert self.web3.isConnected(), 'Could not connect to node'
     
-    self.account1 = Account.from_key(os.getenv('ACCT1_PRIVATE_KEY'))
+    self.account1_private_key = os.getenv('ACCT1_PRIVATE_KEY')
+    self.account1 = Account.from_key(self.account1_private_key)
     self.account2 = Account.from_key(os.getenv('ACCT2_PRIVATE_KEY'))
 
   def print_balances(self) -> None:
@@ -51,21 +53,39 @@ class Web3Playground:
     }
     signed_tx = self.web3.eth.account.sign_transaction(
       tx,
-      os.getenv('ACCT1_PRIVATE_KEY') 
+      self.account1_private_key 
     )
     tx_hash = self.web3.eth.send_raw_transaction(signed_tx.rawTransaction)
 
     return self.web3.toHex(tx_hash)
 
-  def signed_message(self) -> str:
-    pass
+  def sign_message(self, message: str):
+    signable_message = encode_defunct(text=message)
+    signed_message = self.web3.eth.account.sign_message(
+      signable_message,
+      private_key=self.account1_private_key
+    )
+    return signed_message
+
+  def verify_message(self, message: str, signed_message) -> bool:
+    signable_message = encode_defunct(text=message)
+    return self.web3.eth.account.recover_message(
+      signable_message,
+      signature=signed_message.signature
+    )
+
+        
 
 
 if __name__ == "__main__":
   load_dotenv()
-  playground = Web3Playground()
+  playground: Web3Playground = Web3Playground()
   playground.print_balances()
   #tx_hash = playground.send_some_eth()
   #print(tx_hash)
   #playground.print_balances
-  
+
+  message: str = "Me gusta Miami"
+  signed_message = playground.sign_message(message)
+  assert playground.verify_message(message, signed_message), 'message could not be verified'
+
