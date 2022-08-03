@@ -80,12 +80,15 @@ class Web3Playground:
 if __name__ == "__main__":
   load_dotenv()
   playground: Web3Playground = Web3Playground()
+
+  # Send some eth
   playground.print_balances()
   #tx_hash = playground.send_some_eth()
   #print(tx_hash)
   #playground.print_balances
 
+
+  # Sign and verify a message signature
   message: str = "Me gusta Miami"
   signed_message = playground.sign_message(message)
   assert playground.verify_message(message, signed_message), 'message could not be verified'
-
