@@ -4,6 +4,7 @@ from web3.middleware import geth_poa_middleware
 from eth_account import Account
 from eth_account.messages import encode_defunct
 from dotenv import load_dotenv
+from constants import DAI_CONTRACT_ADDRESS, DAI_ABI
 
 
 class Web3Playground:
@@ -74,7 +75,21 @@ class Web3Playground:
       signature=signed_message.signature
     )
 
-        
+  def read_smart_contract(self) -> None:
+    contract = self.web3.eth.contract(
+      address=Web3.toChecksumAddress(DAI_CONTRACT_ADDRESS),
+      abi=DAI_ABI
+    )
+  
+    total_supply: float = contract.functions.totalSupply().call()
+    name: str = contract.functions.name().call()
+    symbol: str = contract.functions.symbol().call()
+    wallet_address: str = Web3.toChecksumAddress('0x2a098157953d0e0108447e27ec5d4fa971fd54cb')
+    balance: float = contract.functions.balanceOf(wallet_address).call()
+
+    print("Total Supply = %.2f %s" % (self.web3.fromWei(total_supply, 'ether'), symbol))
+    print("Token Name = %s" % name)
+    print("Balance of wallet %s = %.2f %s" % (wallet_address, self.web3.fromWei(balance, 'ether'), symbol))
 
 
 if __name__ == "__main__":
@@ -87,8 +102,10 @@ if __name__ == "__main__":
   #print(tx_hash)
   #playground.print_balances
 
-
   # Sign and verify a message signature
   message: str = "Me gusta Miami"
   signed_message = playground.sign_message(message)
   assert playground.verify_message(message, signed_message), 'message could not be verified'
+
+  # Read some data from Dai smart contract
+  playground.read_smart_contract()
