@@ -4,7 +4,8 @@ from web3.middleware import geth_poa_middleware
 from eth_account import Account
 from eth_account.messages import encode_defunct
 from dotenv import load_dotenv
-from constants import DAI_CONTRACT_ADDRESS, DAI_ABI
+from constants import DAI_CONTRACT_ADDRESS, DAI_ABI, GREETING_CONTRACT_ADDRESS,\
+   GREETING_ABI
 
 
 class Web3Playground:
@@ -91,6 +92,36 @@ class Web3Playground:
     print("Token Name = %s" % name)
     print("Balance of wallet %s = %.2f %s" % (wallet_address, self.web3.fromWei(balance, 'ether'), symbol))
 
+  def get_greeting(self) -> str:
+    contract = self.web3.eth.contract(
+      address=Web3.toChecksumAddress(GREETING_CONTRACT_ADDRESS),
+      abi=GREETING_ABI
+    )
+    greeting: str = contract.functions.greet().call()
+    return greeting
+
+  def set_greeting(self, new_greeting: str) -> str:
+    contract = self.web3.eth.contract(
+      address=Web3.toChecksumAddress(GREETING_CONTRACT_ADDRESS),
+      abi=GREETING_ABI
+    )
+    nonce = self.web3.eth.get_transaction_count(self.account1.address)
+    tx = contract.functions.setGreeting(new_greeting).build_transaction({
+      'nonce': nonce,
+      'gas': 70000,
+      'maxFeePerGas': self.web3.toWei('2', 'gwei'),
+      'maxPriorityFeePerGas': self.web3.toWei('1', 'gwei'),
+      'chainId': 5
+    })
+    signed_tx = self.web3.eth.account.sign_transaction(
+      tx,
+      self.account1_private_key 
+    )
+    tx_hash = self.web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+    self.web3.eth.waitForTransactionReceipt(tx_hash)
+
+    return self.web3.toHex(tx_hash)
+
 
 if __name__ == "__main__":
   load_dotenv()
@@ -109,3 +140,9 @@ if __name__ == "__main__":
 
   # Read some data from Dai smart contract
   playground.read_smart_contract()
+
+  # Interact with greeter contract
+  print("Current greeting = %s" % playground.get_greeting())
+  tx_hash = playground.set_greeting('Hola!')
+  #print("Set new greeting. TX hash = %s" % tx_hash)
+  #print("New greeting = %s" % playground.get_greeting())
