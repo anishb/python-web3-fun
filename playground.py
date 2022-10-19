@@ -6,6 +6,7 @@ from web3.middleware import geth_poa_middleware
 from eth_account import Account
 from eth_account.messages import encode_defunct
 from dotenv import load_dotenv
+from enum import Enum
 from constants import DAI_CONTRACT_ADDRESS, DAI_ABI, GREETING_CONTRACT_ADDRESS,\
    GREETING_ABI
 
@@ -141,7 +142,6 @@ class Web3Playground:
     for i in range(num_transactions):
       self.read_transaction(block_number, i)
 
-
   def read_transaction(self, block_number: int, tx_index: int) -> None:
     tx_obj: Dict[str, Any] = self.web3.eth.get_transaction_by_block(block_number, tx_index)
     tx_hash: str = tx_obj['hash'].hex()
@@ -154,9 +154,29 @@ class Web3Playground:
     print("==========================================================")
     print("Transaction Hash = %s" % tx_hash)
     print("Transaction Index = %d" % tx_index)
+
     print("From = %s" % tx_from)
+    if tx_from is not None:
+      if self.is_contract_address(tx_from):
+        print("Sender is a contract")
+      else:
+        print("Sender is an externally owned account")
+    
     print("To = %s" % tx_to)
+    if tx_to is not None:
+      if self.is_contract_address(tx_to):
+        print("Receiver is a contract")
+      else:
+        print("Receiver is an externally owned account")
+
     print("Value = %.4f gwei" % self.web3.fromWei(tx_value, 'gwei'))
+
+  def is_contract_address(self, tx_hash: str) -> bool:
+    result: bytes = self.web3.eth.getCode(tx_hash)
+    contract_data: str = result.hex()
+    if contract_data == '0x':
+        return False
+    return True
 
 
 if __name__ == "__main__":
@@ -185,3 +205,7 @@ if __name__ == "__main__":
 
   # Read block data
   playground.read_blocks()
+
+  # Check is address is a contract
+  assert playground.is_contract_address(DAI_CONTRACT_ADDRESS), 'Should be DAI address'
+
