@@ -8,3 +8,5 @@ DAI_ABI = json.loads('[{"inputs":[{"internalType":"uint256","name":"chainId_","t
 GREETING_CONTRACT_ADDRESS = '0x4a1365287532f1b4a78a80670f4c75c50c63549b'
 
 GREETING_ABI = json.loads('[{"inputs":[{"internalType":"string","name":"_greeting","type":"string"}],"name":"setGreeting","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_greeting","type":"string"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"greet","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"}]')
+
+UNISWAP_QUOTER_ADDRESS = '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6'
